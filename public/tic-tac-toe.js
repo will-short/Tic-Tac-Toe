@@ -1,47 +1,104 @@
 // Your code here
-let gameWon = false;
+let gameWon = 0;
+let matrix = ["", "", "", "", "", "", "", "", ""];
+let counter = 1;
+
 window.addEventListener("DOMContentLoaded", (e) => {
   let gameBoard = document.getElementById("game");
+  let localMain = localStorage.getItem("main");
+  let localCounter = localStorage.getItem("counter");
+  let localMatrix = localStorage.getItem("matrix");
+  let localWinState = localStorage.getItem("winState");
+
+  if (localMain) {
+    console.log("works");
+    main.innerHTML = localMain;
+    counter = localCounter;
+    matrix = localMatrix.split(",");
+    gameWon = parseInt(localWinState);
+  } else {
+    for (let i = 0; i < 9; i++) {
+      let gameDiv = document.createElement("div");
+      gameDiv.id = i;
+      gameBoard.appendChild(gameDiv);
+    }
+  }
   loadBoard(gameBoard);
+  setLocalStorage();
   newGame(gameBoard);
+  giveUp();
 });
-function newGame(gameBoard) {
-  let newGameButton = document.getElementById("new-game");
-  let winText = document.querySelector("h1");
-  newGameButton.addEventListener("click", (e) => {
-    winText.innerText = "";
-    loadBoard(gameBoard);
+
+function setLocalStorage() {
+  let main = document.getElementById("main");
+  localStorage.setItem("main", main.innerHTML);
+  localStorage.setItem("counter", counter);
+  localStorage.setItem("matrix", matrix);
+  localStorage.setItem("winState", gameWon);
+}
+
+function giveUp() {
+  let giveUpButton = document.getElementById("give-up");
+
+  giveUpButton.addEventListener("click", (e) => {
+    if (currentPlayer() === "x") {
+      winnerText("o");
+    } else {
+      winnerText("x");
+    }
+    giveUpButton.disabled = true;
   });
 }
+
+function newGame(gameBoard) {
+  let giveUpButton = document.getElementById("give-up");
+  let newGameButton = document.getElementById("new-game");
+  let winText = document.querySelector("h1");
+  let gameSections = document.querySelectorAll("#game > div");
+
+  if (gameWon === 0) newGameButton.disabled = true;
+
+  newGameButton.addEventListener("click", (e) => {
+    giveUpButton.disabled = false;
+    newGameButton.disabled = true;
+    gameWon = 0;
+    winText.innerText = "";
+    matrix = ["", "", "", "", "", "", "", "", ""];
+    gameSections.forEach((gameSection) => (gameSection.innerHTML = ""));
+    counter = 1;
+    setLocalStorage();
+  });
+}
+
+function currentPlayer() {
+  if (counter % 2 === 0) return "o";
+  return "x";
+}
+
 function loadBoard(gameBoard) {
-  let counter = 0;
-  let matrix = ["", "", "", "", "", "", "", "", ""];
   let imgX =
     "https://assets.aaonline.io/Module-DOM-API/formative-project-tic-tac-toe/player-x.svg";
   let imgY =
     "https://assets.aaonline.io/Module-DOM-API/formative-project-tic-tac-toe/player-o.svg";
 
-  for (let i = 0; i < 9; i++) {
-    let gameDiv = document.createElement("div");
-    gameDiv.id = i;
+  let gameChildren = document.querySelectorAll("#game > div");
 
+  gameChildren.forEach((gameDiv) => {
     gameDiv.addEventListener("click", (e) => {
-      if (!gameDiv.innerHTML && gameWon === false) {
-        counter++;
-
-        if (counter % 2 !== 0) {
+      if (!gameDiv.innerHTML && gameWon === 0) {
+        if (currentPlayer() === "x") {
           matrix[parseInt(gameDiv.id)] = "x";
           gameDiv.innerHTML = `<img src=${imgX}>`;
         } else {
           matrix[parseInt(gameDiv.id)] = "o";
           gameDiv.innerHTML = `<img src=${imgY}>`;
         }
+        counter++;
+        setLocalStorage();
         gameState(matrix);
       }
     });
-
-    gameBoard.appendChild(gameDiv);
-  }
+  });
 }
 
 function gameState(matrix) {
@@ -65,9 +122,12 @@ function gameState(matrix) {
 }
 
 function winnerText(str) {
+  let newGameButton = document.getElementById("new-game");
+
   let winner = document.querySelector("h1");
 
   winner.innerText = `Winner: ${str.toUpperCase()}`;
-
-  gameWon = true;
+  newGameButton.disabled = false;
+  gameWon = 1;
+  setLocalStorage();
 }
