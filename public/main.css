@@ -41,7 +41,23 @@ h1 {
 }
 
 
-
 #game > div {
   background-color:white;
+}
+
+@media screen and (max-width: 450px) {
+  h1 {
+    height: 5vh;
+  }
+  div#game {
+    width: 99vw;
+    height: 99vw;
+    grid-template-columns: repeat(3, 33vw);
+    grid-template-rows: repeat(3, 33vw);
+  }
+  div#players {
+    display: flex;
+    width: 75vw;
+    justify-content: space-between;
+  }
 }
