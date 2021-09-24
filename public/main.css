@@ -33,13 +33,17 @@ h1 {
 
 #buttons {
   display: flex;
-  width: 235px;
+  width: 300px;
   justify-content: space-between;
+  margin-top: 5vh;
 }
 #buttons > *:not(*:disabled) {
   cursor: pointer;
 }
-
+#buttons > * {
+  width: 100px;
+  height: 60px;
+}
 
 #game > div {
   background-color:white;
