@@ -50,10 +50,10 @@ h1 {
     height: 5vh;
   }
   div#game {
-    width: 99vw;
-    height: 99vw;
-    grid-template-columns: repeat(3, 33vw);
-    grid-template-rows: repeat(3, 33vw);
+    width: 96vw;
+    height: 96vw;
+    grid-template-columns: repeat(3, 32vw);
+    grid-template-rows: repeat(3, 32vw);
   }
   div#players {
     display: flex;
