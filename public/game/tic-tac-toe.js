@@ -1,10 +1,26 @@
 //game meta data
-
 let gameWon = 0;
-let matrix = ["", "", "", "", "", "", "", "", ""];
 let counter = 1;
 let computerPlayer = currentPlayer(Math.floor(Math.random() * (3 - 1) + 1));
 let you = computerPlayer === "x" ? "O" : "X";
+
+let gameData = {
+  cols: {
+    1: "",
+    2: "",
+    3: "",
+  },
+  rows: {
+    1: "",
+    2: "",
+    3: "",
+  },
+  diags: {
+    1: "",
+    2: "",
+  },
+};
+
 //make docucalls
 
 window.addEventListener("DOMContentLoaded", (e) => {
@@ -33,16 +49,71 @@ function newGame() {
   if (gameWon === 0) newGameButton.disabled = true;
   newGameButton.addEventListener("click", resetGame);
 }
+function ai(gameChildrenArr) {
+  for (let key in gameData) {
+    for (let item in key) {
+      let keyCondition = gameData[key][item];
+      if (keyCondition === computerPlayer + computerPlayer) {
+        let index = 0;
+        if (key === "cols") index = 1;
+        else if (key === "diags") index = 2;
+        return gameChildrenArr.find(
+          (child) => child.dataset.pos[index] === item
+        );
+      }
+    }
+  }
+  for (let key in gameData) {
+    for (let item in key) {
+      let keyCondition = gameData[key][item];
+      if (keyCondition === you.toLowerCase() + you.toLowerCase()) {
+        let index = 0;
+        if (key === "cols") index = 1;
+        else if (key === "diags") index = 2;
+        return gameChildrenArr.find(
+          (child) => child.dataset.pos[index] === item
+        );
+      }
+    }
+  }
+  let corners = ["11", "13", "31", "33"];
+  let playableCorner;
+  for (let corner of corners) {
+    playableCorner = gameChildrenArr.find((child) =>
+      child.dataset.pos.startsWith(corner)
+    );
+    if (playableCorner) break;
+  }
+  return playableCorner;
+}
 
 function computer() {
   if (gameWon !== 0) return;
   let gameChildren = document.querySelectorAll("#game > div:not(.played)");
-  let randDiv = Math.floor(Math.random() * gameChildren.length);
+  let gameChildrenArr = Array.from(gameChildren);
+
+  let nextMove = ai(gameChildrenArr);
+  console.log(nextMove);
+  let rand = Math.floor(Math.random() * gameChildren.length);
+
+  let middleDiv = document.getElementById("4");
 
   if (computerPlayer === "x" && counter % 2 !== 0) {
-    action(gameChildren[randDiv]);
+    if (counter === 1) {
+      action(middleDiv);
+    } else if (nextMove) {
+      action(nextMove);
+    } else {
+      action(gameChildren[rand]);
+    }
   } else if (computerPlayer === "o" && counter % 2 === 0) {
-    action(gameChildren[randDiv]);
+    if (counter === 2 && middleDiv.className !== "played") {
+      action(middleDiv);
+    } else if (nextMove) {
+      action(nextMove);
+    } else {
+      action(gameChildren[rand]);
+    }
   }
 }
 
@@ -57,7 +128,6 @@ function setPlayers() {
 function loadBoard() {
   you = computerPlayer === "x" ? "O" : "X";
   let wait = (seconds) => new Promise((res) => setTimeout(res, seconds * 1000));
-
   setPlayers();
 
   let gameChildren = document.querySelectorAll("#game > div");
@@ -74,21 +144,26 @@ function loadBoard() {
   });
 }
 
-function gameState() {
-  if (matrix.indexOf("") < 0) winner("none");
+function gameState(gameDiv) {
+  let posData = gameDiv.dataset.pos;
+  let elData = gameDiv.dataset.el;
+  let gamePlayed = document.querySelectorAll("#game > div.played");
 
-  let col1 = matrix[0] + matrix[3] + matrix[6];
-  let col2 = matrix[1] + matrix[4] + matrix[7];
-  let col3 = matrix[2] + matrix[5] + matrix[8];
+  if (gamePlayed.length === 9) winner("none");
 
-  let row1 = matrix[0] + matrix[1] + matrix[2];
-  let row2 = matrix[3] + matrix[4] + matrix[5];
-  let row3 = matrix[6] + matrix[7] + matrix[8];
+  gameData.diags[posData[2]] += elData;
+  gameData.diags[posData[3]] += elData;
+  gameData.cols[posData[1]] += elData;
+  gameData.rows[posData[0]] += elData;
 
-  let diagLeft = matrix[0] + matrix[4] + matrix[8];
-  let diagRight = matrix[2] + matrix[4] + matrix[6];
+  let data = [gameData.cols[posData[1]], gameData.rows[posData[0]]];
 
-  let data = [row1, row2, row3, col1, col2, col3, diagLeft, diagRight];
+  if (posData[2] && posData[3]) {
+    data.push(gameData.diags[posData[2]]);
+    data.push(gameData.diags[posData[3]]);
+  } else if (posData[2]) {
+    data.push(gameData.diags[posData[2]]);
+  }
 
   if (data.indexOf("xxx") >= 0) return winner("x");
   if (data.indexOf("ooo") >= 0) return winner("o");
@@ -120,17 +195,17 @@ function action(gameDiv) {
 
   if (!gameDiv.innerHTML && gameWon === 0) {
     if (currentPlayer(counter) === "x") {
-      matrix[parseInt(gameDiv.id)] = "x";
+      gameDiv.setAttribute("data-el", "x");
       gameDiv.className = "played";
       gameDiv.innerHTML = `<img src=${imgX}>`;
     } else {
-      matrix[parseInt(gameDiv.id)] = "o";
+      gameDiv.setAttribute("data-el", "o");
       gameDiv.className = "played";
       gameDiv.innerHTML = `<img src=${imgY}>`;
     }
 
     counter++;
-    gameState();
+    gameState(gameDiv);
     if (gameWon === 1) giveUpButton.disabled = true;
   }
 }
@@ -145,18 +220,35 @@ function resetGame() {
   newGameButton.disabled = true;
   gameWon = 0;
   winText.innerText = "";
-  matrix = ["", "", "", "", "", "", "", "", ""];
+
+  gameData = {
+    cols: {
+      1: "",
+      2: "",
+      3: "",
+    },
+    rows: {
+      1: "",
+      2: "",
+      3: "",
+    },
+    diags: {
+      1: "",
+      2: "",
+    },
+  };
 
   gameSections.forEach((gameSection) => {
     gameSection.innerHTML = "";
     gameSection.classList.remove("played");
+    delete gameSection.dataset.el;
   });
+
   counter = 1;
 
   computerPlayer = currentPlayer(Math.floor(Math.random() * (3 - 1) + 1));
   you = computerPlayer === "x" ? "O" : "X";
-  computer(computerPlayer);
-
+  computer();
   setPlayers();
   setLocalStorage();
 }
@@ -164,14 +256,13 @@ function resetGame() {
 function getLocalStorage() {
   let localMain = localStorage.getItem("main");
   let localCounter = localStorage.getItem("counter");
-  let localMatrix = localStorage.getItem("matrix");
   let localWinState = localStorage.getItem("winState");
   let localComputer = localStorage.getItem("computer");
-
+  let localgameData = localStorage.getItem("gameData");
+  gameData = JSON.parse(localgameData);
   computerPlayer = localComputer;
   main.innerHTML = localMain;
   counter = localCounter;
-  matrix = localMatrix.split(",");
   gameWon = parseInt(localWinState);
 }
 
@@ -179,7 +270,8 @@ function setLocalStorage() {
   let main = document.getElementById("main");
   localStorage.setItem("computer", computerPlayer);
   localStorage.setItem("main", main.innerHTML);
+
+  localStorage.setItem("gameData", JSON.stringify(gameData));
   localStorage.setItem("counter", counter);
-  localStorage.setItem("matrix", matrix);
   localStorage.setItem("winState", gameWon);
 }
