@@ -1,37 +1,9 @@
-//game meta data
-let gameWon = 0;
-let counter = 1;
-let computerPlayer = currentPlayer(Math.floor(Math.random() * (3 - 1) + 1));
-let you = computerPlayer === "x" ? "O" : "X";
-
-let gameData = {
-  cols: {
-    1: "",
-    2: "",
-    3: "",
-  },
-  rows: {
-    1: "",
-    2: "",
-    3: "",
-  },
-  diags: {
-    1: "",
-    2: "",
-  },
-};
-
-//make docucalls
-
-window.addEventListener("DOMContentLoaded", (e) => {
-  if (localStorage.getItem("main")) getLocalStorage();
-  loadBoard();
-  newGame();
-  giveUp();
-});
+if (localStorage.getItem("main")) getLocalStorage();
+loadBoard();
+newGame();
+giveUp();
 
 function giveUp() {
-  let giveUpButton = document.getElementById("give-up");
   if (gameWon === 1) giveUpButton.disabled = true;
 
   giveUpButton.addEventListener("click", (e) => {
@@ -43,78 +15,9 @@ function giveUp() {
     giveUpButton.disabled = true;
   });
 }
-
 function newGame() {
-  let newGameButton = document.getElementById("new-game");
   if (gameWon === 0) newGameButton.disabled = true;
   newGameButton.addEventListener("click", resetGame);
-}
-function ai(gameChildrenArr) {
-  for (let key in gameData) {
-    for (let item in key) {
-      let keyCondition = gameData[key][item];
-      if (keyCondition === computerPlayer + computerPlayer) {
-        let index = 0;
-        if (key === "cols") index = 1;
-        else if (key === "diags") index = 2;
-        return gameChildrenArr.find(
-          (child) => child.dataset.pos[index] === item
-        );
-      }
-    }
-  }
-  for (let key in gameData) {
-    for (let item in key) {
-      let keyCondition = gameData[key][item];
-      if (keyCondition === you.toLowerCase() + you.toLowerCase()) {
-        let index = 0;
-        if (key === "cols") index = 1;
-        else if (key === "diags") index = 2;
-        return gameChildrenArr.find(
-          (child) => child.dataset.pos[index] === item
-        );
-      }
-    }
-  }
-  let corners = ["11", "13", "31", "33"];
-  let playableCorner;
-  for (let corner of corners) {
-    playableCorner = gameChildrenArr.find((child) =>
-      child.dataset.pos.startsWith(corner)
-    );
-    if (playableCorner) break;
-  }
-  return playableCorner;
-}
-
-function computer() {
-  if (gameWon !== 0) return;
-  let gameChildren = document.querySelectorAll("#game > div:not(.played)");
-  let gameChildrenArr = Array.from(gameChildren);
-
-  let nextMove = ai(gameChildrenArr);
-  console.log(nextMove);
-  let rand = Math.floor(Math.random() * gameChildren.length);
-
-  let middleDiv = document.getElementById("4");
-
-  if (computerPlayer === "x" && counter % 2 !== 0) {
-    if (counter === 1) {
-      action(middleDiv);
-    } else if (nextMove) {
-      action(nextMove);
-    } else {
-      action(gameChildren[rand]);
-    }
-  } else if (computerPlayer === "o" && counter % 2 === 0) {
-    if (counter === 2 && middleDiv.className !== "played") {
-      action(middleDiv);
-    } else if (nextMove) {
-      action(nextMove);
-    } else {
-      action(gameChildren[rand]);
-    }
-  }
 }
 
 function setPlayers() {
@@ -127,7 +30,6 @@ function setPlayers() {
 
 function loadBoard() {
   you = computerPlayer === "x" ? "O" : "X";
-  let wait = (seconds) => new Promise((res) => setTimeout(res, seconds * 1000));
   setPlayers();
 
   let gameChildren = document.querySelectorAll("#game > div");
@@ -171,8 +73,6 @@ function gameState(gameDiv) {
 }
 
 function winner(str) {
-  let newGameButton = document.getElementById("new-game");
-
   let winner = document.querySelector("h1");
 
   winner.innerText = `Winner: ${str.toUpperCase()}`;
@@ -181,18 +81,7 @@ function winner(str) {
   setLocalStorage();
 }
 
-function currentPlayer(num) {
-  if (num % 2 === 0) return "o";
-  return "x";
-}
-
 function action(gameDiv) {
-  let giveUpButton = document.getElementById("give-up");
-  let imgX =
-    "https://assets.aaonline.io/Module-DOM-API/formative-project-tic-tac-toe/player-x.svg";
-  let imgY =
-    "https://assets.aaonline.io/Module-DOM-API/formative-project-tic-tac-toe/player-o.svg";
-
   if (!gameDiv.innerHTML && gameWon === 0) {
     if (currentPlayer(counter) === "x") {
       gameDiv.setAttribute("data-el", "x");
@@ -211,10 +100,8 @@ function action(gameDiv) {
 }
 
 function resetGame() {
-  let giveUpButton = document.getElementById("give-up");
   let winText = document.querySelector("h1");
   let gameSections = document.querySelectorAll("#game > div");
-  let newGameButton = document.getElementById("new-game");
 
   giveUpButton.disabled = false;
   newGameButton.disabled = true;
@@ -274,4 +161,75 @@ function setLocalStorage() {
   localStorage.setItem("gameData", JSON.stringify(gameData));
   localStorage.setItem("counter", counter);
   localStorage.setItem("winState", gameWon);
+}
+function ai(gameChildrenArr) {
+  let middleDiv = document.getElementById("4");
+  if (counter === 1 || (counter === 2 && middleDiv.className !== "played")) {
+    return middleDiv;
+  }
+
+  for (let key in gameData) {
+    for (let item in key) {
+      let keyCondition = gameData[key][item];
+      if (keyCondition === computerPlayer + computerPlayer) {
+        let index = 0;
+        if (key === "cols") index = 1;
+        else if (key === "diags") index = 2;
+        return gameChildrenArr.find(
+          (child) => child.dataset.pos[index] === item
+        );
+      }
+    }
+  }
+
+  for (let key in gameData) {
+    for (let item in key) {
+      let keyCondition = gameData[key][item];
+      if (keyCondition === you.toLowerCase() + you.toLowerCase()) {
+        let index = 0;
+        if (key === "cols") index = 1;
+        else if (key === "diags") index = 2;
+        return gameChildrenArr.find(
+          (child) => child.dataset.pos[index] === item
+        );
+      }
+    }
+  }
+
+  for (let key in gameData) {
+    for (let item in key) {
+      let keyCondition = gameData[key][item];
+      if (keyCondition === computerPlayer) {
+        if (key === "diags") index = 2;
+        else if (key === "cols") index = 1;
+        else if (key === "rows") index = 0;
+        return gameChildrenArr.find(
+          (child) => child.dataset.pos[index] === item
+        );
+      }
+    }
+  }
+
+  let edges = ["11", "13", "31", "33", "12", "21", "23", "32"];
+  for (let edge of edges) {
+    let playableEdge = gameChildrenArr.find((child) =>
+      child.dataset.pos.startsWith(edge)
+    );
+    if (playableEdge) return playableEdge;
+  }
+}
+
+function computer() {
+  if (gameWon !== 0) return;
+  let gameChildren = document.querySelectorAll("#game > div:not(.played)");
+  let gameChildrenArr = Array.from(gameChildren);
+
+  let nextMove = ai(gameChildrenArr);
+  console.log(nextMove);
+
+  if (computerPlayer === "x" && counter % 2 !== 0) {
+    action(nextMove);
+  } else if (computerPlayer === "o" && counter % 2 === 0) {
+    action(nextMove);
+  }
 }
